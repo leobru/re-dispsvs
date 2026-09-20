@@ -1,0 +1,88 @@
+0400+1: СБОР80: MATCH [2113 objects: СБОР80]
+0401+2: НАКЗАД: MATCH [2113 objects: НАКЗАД]
+0403+1: НАКОПЛ: MATCH [2113 objects: НАКОПЛ]
+0404+2: ВЫДАЧ1: MATCH [2113 objects: ВЫДАЧ1]
+0406+1: СБПВВ: MATCH [2113 objects: СБПВВ]
+0407+1: ИТОГ: MATCH [2113 objects: ИТОГ]
+0410+2: НАСТР: MATCH [2113 objects: НАСТР]
+0412+3: СЧЕТ: MATCH [2113 objects: СЧЕТ]
+0416+3: МЕС86: MATCH [2113 objects: МЕС86]
+0431+1: ПЕЧАТЬ: DIFF 23 bytes, 13 words; first zone 0431, word 0073, byte 1
+0437+1: Э64: DIFF 28 bytes, 18 words; first zone 0437, word 0033, byte 1
+0440+1: РОБОТ: DIFF 104 bytes, 68 words; first zone 0440, word 0050, byte 4
+0441+3: АУМОД1,АУМОД2: MATCH
+0445+1: ПРОЦЕС: DIFF 159 bytes, 112 words; first zone 0445, word 0060, byte 4
+0446+1: ПУСКАЧ: DIFF 2834 bytes, 575 words; first zone 0446, word 0051, byte 0
+0447+1: АВРАСП: DIFF 4069 bytes, 787 words; first zone 0447, word 0052, byte 4
+0450+1: ЭКВВОД: DIFF 3443 bytes, 685 words; first zone 0450, word 0030, byte 5
+0451+1: РЕСУРС: DIFF 166 bytes, 99 words; first zone 0451, word 0004, byte 2
+0453+1: В1К: DIFF 49 bytes, 33 words; first zone 0453, word 0057, byte 4
+0454+2: СИПРОГ,IО: DIFF 3 bytes, 1 words; first zone 0454, word 0456, byte 3 [2113 objects: СИПРОГ,IО]
+0456+1: НОМБОБ: DIFF 1643 bytes, 389 words; first zone 0456, word 0050, byte 2
+0457+1: ПРИКАЗ: DIFF 2999 bytes, 590 words; first zone 0457, word 0052, byte 2
+0460+1: НЕРОТ: DIFF 3113 bytes, 626 words; first zone 0460, word 0050, byte 5
+0461+3: ГЕН: DIFF 8108 bytes, 1507 words; first zone 0461, word 0004, byte 5 [2113 objects: ГЕН]
+0464+1: СЕРП5: DIFF 3 bytes, 2 words; first zone 0464, word 0647, byte 5 [2113 objects: СЕРП5]
+0465+3: ЕСМЛ,ДМЛМБ,ХЛАМ,РЕЗОТ: DIFF 14607 bytes, 2702 words; first zone 0465, word 0267, byte 4
+0471+1: ГЕНС2: DIFF 1052 bytes, 269 words; first zone 0471, word 0004, byte 5
+0472+2: РЗДСВС,СОСТАВ: DIFF 4248 bytes, 808 words; first zone 0472, word 0000, byte 5
+0475+2: БОЭК1,АВМД,СМЕ: DIFF 11312 bytes, 2039 words; first zone 0475, word 0000, byte 0
+0500+1: ВЕКТОР: DIFF 6 bytes, 1 words; first zone 0500, word 0331, byte 0
+0501+1: АРХИН: DIFF 750 bytes, 614 words; first zone 0501, word 0000, byte 2 [2113 objects: АРХИН]
+0502+2: МЕТКИ: MATCH [2113 objects: МЕТКИ]
+0504+1: ТРАХ: DIFF 125 bytes, 112 words; first zone 0504, word 0030, byte 5 [2113 objects: ТРАХ]
+0505+1: ВЫЗСВС: DIFF 5 bytes, 5 words; first zone 0505, word 0115, byte 5
+0507+1: ВЫЗПВВ: MATCH [2113 objects: ВЫЗПВВ]
+0513+1: БАЦ: MATCH [2113 objects: БАЦ]
+0514+1: ГИДРА: DIFF 3600 bytes, 826 words; first zone 0514, word 0000, byte 2 [2113 objects: ГИДРА]
+0516+2: РЕДАК: MATCH [2113 objects: РЕДАК]
+0520+1: ТУПР,БОП2,ТАБКОД: MATCH
+0523+2: КОМАР: DIFF 1775 bytes, 558 words; first zone 0523, word 0002, byte 5 [2113 objects: КОМАР]
+0525+1: БРЕГЕТ: MATCH [2113 objects: БРЕГЕТ]
+0526+1: АВОСТ,ВИСП,СЕТЬ: DIFF 82 bytes, 73 words; first zone 0526, word 0161, byte 5
+0533+1: СЕРП4: MATCH [2113 objects: СЕРП4]
+0551+1: ГЕНС: DIFF 29 bytes, 14 words; first zone 0551, word 0112, byte 2
+0552+1: ГЕНС1: DIFF 2130 bytes, 464 words; first zone 0552, word 0002, byte 5
+0561+1: УКАЧКА,ЭК6,ЭК7: DIFF 1675 bytes, 385 words; first zone 0561, word 0000, byte 1
+0562+1: В3В4: DIFF 4858 bytes, 913 words; first zone 0562, word 0025, byte 5
+0564+1: ДОПРЕЗ,ПЛАН,ПЛАН2: DIFF 348 bytes, 125 words; first zone 0564, word 0047, byte 4
+0565+1: Э60Д,ПРИК8,ПРОРОК: DIFF 1159 bytes, 259 words; first zone 0565, word 0400, byte 0
+0566+1: СПЭ66,ПРИСКВ,ПРИК10: DIFF 2107 bytes, 419 words; first zone 0566, word 0000, byte 1
+0567+1: ЭК5,СОNSUL,ЕСПЛ: DIFF 2527 bytes, 554 words; first zone 0567, word 0000, byte 0
+0570+1: Э60,РПИПЛ,ЕСПИ80: DIFF 720 bytes, 174 words; first zone 0570, word 0064, byte 4
+0571+1: УПРЯЧЬ,СКОР1,СКОР2: DIFF 2420 bytes, 533 words; first zone 0571, word 0432, byte 5
+0572+1: БОП,Э71ТК: DIFF 2591 bytes, 589 words; first zone 0572, word 0000, byte 0
+0573+1: НРОТ,СПОЭ67,КЧ,КЗ: DIFF 101 bytes, 67 words; first zone 0573, word 0060, byte 4
+0574+1: КАРПВВ,СБОЙВУ,НЕРПВВ,ГП1: DIFF 149 bytes, 89 words; first zone 0574, word 0077, byte 2
+0575+1: СЛОЙКА: DIFF 3739 bytes, 778 words; first zone 0575, word 0000, byte 5
+0576+1: БОП1,ЕСУВВК: DIFF 4097 bytes, 824 words; first zone 0576, word 0000, byte 0
+0577+1: НРКОД: MATCH
+0600+1: В6В7: DIFF 61 bytes, 46 words; first zone 0600, word 0021, byte 5
+0601+1: ЭКГДР: DIFF 101 bytes, 65 words; first zone 0601, word 0001, byte 2
+0602+1: СМЕНА1,СТАТ1С,СТАТ2С,СТАТ3С: DIFF 4703 bytes, 871 words; first zone 0602, word 0000, byte 0
+0603+1: ЭКСТ,ЭК2,ЭК3,ЭК4: DIFF 4789 bytes, 919 words; first zone 0603, word 0000, byte 0
+0604+1: ПЧКЗ: DIFF 2759 bytes, 639 words; first zone 0604, word 0060, byte 1
+0605+1: КЗ1: DIFF 2375 bytes, 511 words; first zone 0605, word 0000, byte 4
+0606+1: ДНЕПР: DIFF 86 bytes, 66 words; first zone 0606, word 0000, byte 2
+0607+1: ГП4: DIFF 3383 bytes, 765 words; first zone 0607, word 0000, byte 0
+0610+1: ОВД: DIFF 32 bytes, 21 words; first zone 0610, word 0014, byte 2
+0611+1: ПГС: DIFF 22 bytes, 18 words; first zone 0611, word 0555, byte 4
+0612+1: АВМЛ: DIFF 93 bytes, 61 words; first zone 0612, word 0003, byte 5
+0613+1: НЕРБ1,ПРИОПР,ПРИК9,ЭКЛИЛЯ: DIFF 3105 bytes, 674 words; first zone 0613, word 0001, byte 5
+0614+1: ПЕРЕХ: DIFF 9 bytes, 5 words; first zone 0614, word 0004, byte 5
+0615+1: КАНАЛ: DIFF 156 bytes, 112 words; first zone 0615, word 0011, byte 2
+0617+1: ПРИК4,ПРИК5,ПРИК6,ПРИК7: DIFF 2474 bytes, 591 words; first zone 0617, word 0000, byte 5
+0620+1: ЦИРКУЛ,ПРИК1,ПРИК2,ПРИК3: DIFF 4858 bytes, 948 words; first zone 0620, word 0000, byte 0
+0621+4: ДИСП70,ВЗУ,ТЕРМ: DIFF 11901 bytes, 2298 words; first zone 0621, word 0012, byte 2
+0625+2: КАЧКА,КИТ,ДИСКИ,ТЕСТЭК,АСПВВ,РЕЗАРХ,ГРУППА: DIFF 8169 bytes, 1531 words; first zone 0625, word 0003, byte 4
+0627+1: МОТТ: DIFF 4556 bytes, 853 words; first zone 0627, word 0023, byte 5
+0706+2: ОСА: DIFF 386 bytes, 88 words; first zone 0707, word 0000, byte 2
+0721+3: АРФА,РА: DIFF 10311 bytes, 2530 words; first zone 0721, word 0012, byte 2 [2113 objects: АРФА,РА]
+0724+1: ОБРАЗ: DIFF 4430 bytes, 883 words; first zone 0724, word 0000, byte 2 [2113 objects: ОБРАЗ]
+0731+4: СЕРП,СЕРП2: DIFF 8094 bytes, 1495 words; first zone 0731, word 0305, byte 5 [2113 objects: СЕРП,СЕРП2]
+0735+1: СЕРП3: DIFF 5 bytes, 4 words; first zone 0735, word 0575, byte 5 [2113 objects: СЕРП3]
+0736+1: ГНУС: DIFF 105 bytes, 47 words; first zone 0736, word 0007, byte 5
+0743+4: ПВВ: DIFF 10839 bytes, 2131 words; first zone 0743, word 0000, byte 5
+0752+2: ВЫДИНС: MATCH [2113 objects: ВЫДИНС]
+0757+1: НЕРЕЗА: DIFF 802 bytes, 614 words; first zone 0757, word 0000, byte 5 [2113 objects: НЕРЕЗА]
+19/87 groups match volume 2153; 68 differ. 0 assembly failures.
