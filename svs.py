@@ -38,7 +38,8 @@ def scan_sources(source):
     result = {}
     for path in sorted(source.glob('*.bemsh')):
         # СЛИЙКА is an alternative СЛОЙКА, outside the archived load map.
-        if path.name in ('слийка.bemsh', 'э71-samples.bemsh'):
+        if path.name in ('слийка.bemsh', 'slijka.bemsh',
+                         'э71-samples.bemsh', 'e71-samples.bemsh'):
             continue
         match = re.search(r'^([^*\s]+)\s+(?:СТАРТ|CTAPT|START)\b',
                           path.read_text(), re.M | re.I)
@@ -88,7 +89,24 @@ def source_cards(text):
     return ''.join(cards)
 
 
+def listing_extent(listing):
+    """Return (start, end) object zones from a successful listing, or None."""
+    text = listing.read_text()
+    errors = re.findall(r'^ЧИСЛО ОШИБОК=(\d+)\.', text, re.M)
+    written = re.search(r'ЗАПИСАН\s+В\s+ЗОНЫ\s+С\s+44([0-7]{4})\s+ПО\s+44([0-7]{4})', text)
+    if not errors or any(int(n) for n in errors) or not written:
+        return None
+    return int(written[1], 8), int(written[2], 8)
+
+
 def assemble(name, path, zone, build, env):
+    listing = build / f'{path.stem}.lst'
+    cached = listing_extent(listing) if listing.exists() else None
+    objects = build / '2221'
+    if (cached and cached[0] == zone and listing.stat().st_mtime >= path.stat().st_mtime
+            and objects.exists() and objects.stat().st_size > 0):
+        print(f'{name}: up to date at 44{cached[0]:04o}-{cached[1]:04o}', flush=True)
+        return cached[1] + 1
     deck = f'''шифр 419999^
 трак 64^
 лент 30(2048-6200)^
@@ -110,8 +128,7 @@ def assemble(name, path, zone, build, env):
 ВВД$$$^
 '''
     deck += source_cards(path.read_text())
-    # ПВВ (адап.bemsh) needs the default compiler: 2113:1170 reports
-    # positional-parameter errors for its ВТБРЗ macro expansions.
+    # ЧТКОМП loads pre-compiled macros from 2113:1170; ПВВ brings its own.
     compiler = '' if name == 'ПВВ' else 'ЧТКОМП421170^\n'
     deck += f'''КВЧ$$$^
 ТРН$$$^
@@ -120,19 +137,24 @@ def assemble(name, path, zone, build, env):
 КНЦ$$$^
 _$ЕКОНЕЦ
 '''
-    job = build / f'{path.stem}.b6'
-    listing = job.with_suffix('.lst')
+    job = listing.with_suffix('.b6')
     job.write_text(deck)
     run(['dispak', job.name], build, env, listing)
-    text = listing.read_text()
-    errors = re.findall(r'^ЧИСЛО ОШИБОК=(\d+)\.', text, re.M)
-    written = re.search(r'ЗАПИСАН\s+В\s+ЗОНЫ\s+С\s+44([0-7]{4})\s+ПО\s+44([0-7]{4})', text)
-    if not errors or any(int(n) for n in errors) or not written:
+    written = listing_extent(listing)
+    if written is None:
         raise ValueError(f'{name}: assembly failed; see {listing}')
-    if int(written[1], 8) != zone:
+    if written[0] != zone:
         raise ValueError(f'{name}: unexpected object placement')
-    print(f'{name}: assembled at 44{zone:04o}-{written[2]}', flush=True)
-    return int(written[2], 8) + 1
+    print(f'{name}: assembled at 44{zone:04o}-{written[1]:04o}', flush=True)
+    return written[1] + 1
+
+
+def scratch_disk(build, name, wipe):
+    path = build / name
+    if path.is_symlink():
+        raise ValueError(f'Refusing scratch disk symlink: {path}')
+    if wipe or not path.exists():
+        path.write_bytes(b'')
 
 
 def build_image(args, build, env):
@@ -140,12 +162,9 @@ def build_image(args, build, env):
     groups = load_map(args.loadmap)
     (build / 'manifest.json').unlink(missing_ok=True)
     (build / 'verify.txt').unlink(missing_ok=True)
-    # Rebuild from empty disks: no stale objects or copied golden bytes.
-    for volume in ('2221', '2222'):
-        path = build / volume
-        if path.is_symlink():
-            raise ValueError(f'Refusing scratch disk symlink: {path}')
-        path.write_bytes(b'')
+    # Keep object disk 2221 for incremental assembly; always rebuild linked 2222.
+    scratch_disk(build, '2221', wipe=False)
+    scratch_disk(build, '2222', wipe=True)
     locations = {}
     failures = {}
     zone = 0
@@ -212,11 +231,30 @@ def validate_rvs(log, groups):
             raise ValueError(f"RVS did not write zone {group['zone']:04o}; see build/rvs.log")
 
 
+def word_octal(data):
+    return f'{int.from_bytes(data, "big"):016o}'
+
+
+def differing_words(gold, silver, start, limit=10):
+    """Return lines describing the first `limit` differing 6-byte words."""
+    word_offsets = sorted({i // 6 for i, (a, b) in enumerate(zip(gold, silver)) if a != b})
+    lines = []
+    for index in word_offsets[:limit]:
+        offset = index * 6
+        zone = start + offset // ZONE
+        word = offset % ZONE // 6
+        lines.append(f'{zone:04o} word {word:04o}: {word_octal(gold[offset:offset + 6])} '
+                     f'{word_octal(silver[offset:offset + 6])}')
+    return lines
+
+
 def verify(args, build, env):
     groups = json.loads((build / 'manifest.json').read_text())
     mismatches = 0
     failed = [m['name'] for g in groups for m in g['modules'] if m.get('assembly_error')]
     report = []
+    for path in build.glob('*.diff'):
+        path.unlink()
     for group in groups:
         start, length = group['zone'], group['length']
         blobs = []
@@ -239,6 +277,10 @@ def verify(args, build, env):
             words = len({offset // 6 for offset in diffs})
             message += (f'DIFF {len(diffs)} bytes, {words} words; first zone {start + first // ZONE:04o}, '
                         f'word {first % ZONE // 6:04o}, byte {first % 6}')
+            detail = '# zone word:   G (golden)       S (built)\n'
+            detail += '\n'.join(differing_words(*blobs, start)) + '\n'
+            for module in group['modules']:
+                (build / f"{module['name']}.diff").write_text(detail)
         else:
             message += 'MATCH'
         if fallback:
