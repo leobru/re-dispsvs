@@ -220,6 +220,67 @@ class InfrastructureTests(unittest.TestCase):
             self.assertEqual((build / '2221').read_bytes(), b'objects')
             self.assertEqual((build / '2222').read_bytes(), b'')
 
+    def test_full_diff_marks_zero_holes_and_lists_every_word(self):
+        gold = bytearray(svs.ZONE)
+        silver = bytearray(svs.ZONE)
+        gold[0:6] = b'\x00\x00\x00\x00\x00\x01'
+        gold[6:12] = b'\x00\x00\x00\x00\x00\x02'
+        silver[6:12] = b'\x00\x00\x00\x00\x00\x03'
+        text, n_diffs, n_holes = svs.full_diff_report(bytes(gold), bytes(silver), 0o475)
+        self.assertEqual((n_diffs, n_holes), (2, 1))
+        self.assertEqual(text.splitlines()[:5], [
+            '# word-index  zone:word   G (golden)       S (built)',
+            '# total differing words: 2',
+            '# zero-holes (S=0, G≠0): 1',
+            '    0  0475:0000  0000000000000001  0000000000000000  ZERO-HOLE',
+            '    1  0475:0001  0000000000000002  0000000000000003',
+        ])
+
+    def test_diff_command_resolves_stem_and_writes_build_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            build = Path(directory)
+            gold = build / 'G0475-L2'
+            silver = build / 'S0475-L2'
+            gdata = bytearray(svs.ZONE * 2)
+            sdata = bytearray(svs.ZONE * 2)
+            gdata[0o70 * 6 + 5] = 1
+            gold.write_bytes(gdata)
+            silver.write_bytes(sdata)
+            args = SimpleNamespace(operands=['0475-L2'], output=None, start=None)
+            with contextlib.redirect_stdout(io.StringIO()) as out:
+                status = svs.diff_dumps(args, build)
+            self.assertEqual(status, 1)
+            report = (build / 'G0475-L2.diff').read_text()
+            self.assertIn('ZERO-HOLE', report)
+            self.assertIn('0475:0070', report)
+            self.assertIn('1 differing words, 1 zero-holes', out.getvalue())
+
+
+class FlattenTests(unittest.TestCase):
+    SAMPLE = (
+        "ИПМ МАКРО-БЕМШ ВЕР.06/78      ВИСП     СТР 0001\n"
+        "*МЕТ*\n"
+        "ВИСП1  12066В   Е1     00162 А  ШГ     00026СА  000000 00000\n"
+        "0ЛИТ   12335    ВШГ    12244В   М4     00004 А  D05723 05723\n"
+        "***********\n"
+    )
+
+    def test_extracts_entries_and_skips_externals(self):
+        import flatten
+        entries, mod = flatten.symbols_from_listing(self.SAMPLE)
+        self.assertEqual(mod, 'ВИСП')
+        text = flatten.format_sym(entries, mod)
+        self.assertEqual(text.splitlines(), [
+            '12066 0 ВИСП1 entry ВИСП',
+            '00162 0 Е1',
+            '12244 0 ВШГ entry ВИСП',
+            '00004 0 М4',
+            '05723 1 D05723',
+        ])
+        # СА external ШГ skipped; 0ЛИТ skipped
+        self.assertNotIn(' 0 ШГ', text)
+        self.assertNotIn('0ЛИТ', text)
+
 
 if __name__ == '__main__':
     unittest.main()

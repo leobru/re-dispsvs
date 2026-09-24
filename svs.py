@@ -11,6 +11,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parent
 ZONE = 6144
+WORD = 6
+DUMP_NAME = re.compile(r'^([GS])?([0-7]+)-L([0-7]+)$', re.I)
 
 
 def run(command, build, env, output=None):
@@ -235,17 +237,110 @@ def word_octal(data):
     return f'{int.from_bytes(data, "big"):016o}'
 
 
+def dump_zone(path):
+    """Return the starting zone octal from a dump name like G0475-L2."""
+    match = DUMP_NAME.fullmatch(path.name)
+    if not match:
+        raise ValueError(f'Cannot parse dump zone from name: {path.name}')
+    return int(match[2], 8)
+
+
+def resolve_dump_pair(operands, build):
+    """Resolve `0475-L2` or two paths into (gold_path, silver_path, start_zone)."""
+    if len(operands) == 1:
+        match = DUMP_NAME.fullmatch(Path(operands[0]).name)
+        if not match:
+            raise ValueError(f'diff stem must look like 0475-L2 or G0475-L2, got {operands[0]!r}')
+        stem = f'{match[2]}-L{match[3]}'
+        gold, silver = build / f'G{stem}', build / f'S{stem}'
+        for path in (gold, silver):
+            if not path.is_file():
+                raise ValueError(f'Dump file not found: {path}')
+        if gold.stat().st_size != silver.stat().st_size:
+            raise ValueError(f'Dump sizes differ: {gold} vs {silver}')
+        return gold, silver, int(match[2], 8)
+    if len(operands) == 2:
+        paths = []
+        for item in operands:
+            path = Path(item)
+            if not path.is_file():
+                candidate = build / path.name
+                if candidate.is_file():
+                    path = candidate
+            paths.append(path)
+        gold, silver = paths
+        for path in paths:
+            if not path.is_file():
+                raise ValueError(f'Dump file not found: {path}')
+        if gold.stat().st_size != silver.stat().st_size:
+            raise ValueError(f'Dump sizes differ: {gold} vs {silver}')
+        return gold, silver, dump_zone(gold)
+    raise ValueError('diff needs one stem (0475-L2) or two dump paths')
+
+
+def iter_differing_words(gold, silver):
+    """Yield absolute word indices where the 6-byte BESM words differ."""
+    if len(gold) != len(silver):
+        raise ValueError(f'Dump sizes differ: {len(gold)} vs {len(silver)}')
+    if len(gold) % WORD:
+        raise ValueError(f'Dump length {len(gold)} is not a multiple of {WORD}')
+    zero = bytes(WORD)
+    for index in range(len(gold) // WORD):
+        offset = index * WORD
+        g = gold[offset:offset + WORD]
+        s = silver[offset:offset + WORD]
+        if g != s:
+            yield index, g, s, s == zero and g != zero
+
+
 def differing_words(gold, silver, start, limit=10):
     """Return lines describing the first `limit` differing 6-byte words."""
-    word_offsets = sorted({i // 6 for i, (a, b) in enumerate(zip(gold, silver)) if a != b})
     lines = []
-    for index in word_offsets[:limit]:
-        offset = index * 6
+    for index, g, s, _hole in iter_differing_words(gold, silver):
+        if limit is not None and len(lines) >= limit:
+            break
+        offset = index * WORD
         zone = start + offset // ZONE
-        word = offset % ZONE // 6
-        lines.append(f'{zone:04o} word {word:04o}: {word_octal(gold[offset:offset + 6])} '
-                     f'{word_octal(silver[offset:offset + 6])}')
+        word = offset % ZONE // WORD
+        lines.append(f'{zone:04o} word {word:04o}: {word_octal(g)} {word_octal(s)}')
     return lines
+
+
+def full_diff_report(gold, silver, start):
+    """Return (text, n_diffs, n_zero_holes) for a complete word-level dump diff."""
+    lines = ['# word-index  zone:word   G (golden)       S (built)']
+    n_diffs = n_holes = 0
+    body = []
+    for index, g, s, hole in iter_differing_words(gold, silver):
+        n_diffs += 1
+        if hole:
+            n_holes += 1
+        offset = index * WORD
+        zone = start + offset // ZONE
+        word = offset % ZONE // WORD
+        mark = '  ZERO-HOLE' if hole else ''
+        body.append(f'{index:5o}  {zone:04o}:{word:04o}  {word_octal(g)}  {word_octal(s)}{mark}')
+    lines.append(f'# total differing words: {n_diffs}')
+    lines.append(f'# zero-holes (S=0, G≠0): {n_holes}')
+    lines.extend(body)
+    return '\n'.join(lines) + '\n', n_diffs, n_holes
+
+
+def diff_dumps(args, build):
+    gold_path, silver_path, start = resolve_dump_pair(args.operands, build)
+    gold, silver = gold_path.read_bytes(), silver_path.read_bytes()
+    if args.start is not None:
+        start = args.start
+    text, n_diffs, n_holes = full_diff_report(gold, silver, start)
+    if args.output is not None:
+        out = args.output if args.output.is_absolute() else ROOT / args.output
+    else:
+        out = build / f'{gold_path.name}.diff'
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(text)
+    print(f'{gold_path.name} vs {silver_path.name}: {n_diffs} differing words, '
+          f'{n_holes} zero-holes; wrote {out}', flush=True)
+    return int(bool(n_diffs))
 
 
 def verify(args, build, env):
@@ -274,9 +369,9 @@ def verify(args, build, env):
         if diffs:
             mismatches += 1
             first = diffs[0]
-            words = len({offset // 6 for offset in diffs})
+            words = len({offset // WORD for offset in diffs})
             message += (f'DIFF {len(diffs)} bytes, {words} words; first zone {start + first // ZONE:04o}, '
-                        f'word {first % ZONE // 6:04o}, byte {first % 6}')
+                        f'word {first % ZONE // WORD:04o}, byte {first % WORD}')
             detail = '# zone word:   G (golden)       S (built)\n'
             detail += '\n'.join(differing_words(*blobs, start)) + '\n'
             for module in group['modules']:
@@ -299,7 +394,13 @@ def verify(args, build, env):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['build', 'verify', 'all'])
+    parser.add_argument('command', choices=['build', 'verify', 'all', 'diff'])
+    parser.add_argument('operands', nargs='*',
+                        help='for diff: 0475-L2 / G0475-L2, or two dump paths')
+    parser.add_argument('-o', '--output', type=Path,
+                        help='for diff: output path (default build/<gold>.diff)')
+    parser.add_argument('--start', type=lambda s: int(s, 8),
+                        help='for diff: override starting zone (octal)')
     parser.add_argument('--source', type=Path, default=ROOT / '../besm6.github.io/sources/dispak-svs')
     parser.add_argument('--loadmap', type=Path, default=ROOT / 'loadmap.txt')
     parser.add_argument('--gold', default='2153')
@@ -319,6 +420,8 @@ def main():
 
 def execute(args, build, env):
     try:
+        if args.command == 'diff':
+            return diff_dumps(args, build)
         if args.command in ('build', 'all'):
             failed = build_image(args, build, env)
             if args.command == 'build':
